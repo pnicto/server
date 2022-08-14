@@ -9,8 +9,8 @@ app.use(cors());
 app.use(express.json());
 
 // routes
-import tasksRouter from "./routes/tasksBoardRouter";
-app.use("/api/tasksboards", tasksRouter);
+import tasksboardRouter from "./routes/tasksBoardRouter";
+app.use("/api/tasksboards", tasksboardRouter);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running at port ${process.env.PORT}...`);
