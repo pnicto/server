@@ -13,7 +13,9 @@ app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 // routes
 const tasksBoardRouter_1 = __importDefault(require("./routes/tasksBoardRouter"));
+const cardRouter_1 = __importDefault(require("./routes/cardRouter"));
 app.use("/api/tasksboards", tasksBoardRouter_1.default);
+app.use("/api/taskCards", cardRouter_1.default);
 app.listen(process.env.PORT, () => {
     console.log(`Server is running at port ${process.env.PORT}...`);
 });
