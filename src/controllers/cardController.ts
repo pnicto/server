@@ -24,4 +24,28 @@ const createCard = async (req: Request, res: Response) => {
   res.status(StatusCodes.CREATED).json(newTaskCard);
 };
 
-export { getAllCards, createCard };
+const updateCard = async (req: Request, res: Response) => {
+  const { taskboardId, cardTitle } = req.body;
+  const { taskcardId } = req.params;
+  const updatedCard = await prisma.taskcard.update({
+    where: {
+      id: Number(taskcardId),
+    },
+    data: {
+      cardTitle: cardTitle,
+      taskboardId: Number(taskboardId),
+    },
+  });
+  res.status(StatusCodes.OK).json(updatedCard);
+};
+
+const deleteCard = async (req: Request, res: Response) => {
+  const { taskcardId } = req.params;
+  const deletedCard = await prisma.taskcard.delete({
+    where: {
+      id: Number(taskcardId),
+    },
+  });
+  res.status(StatusCodes.OK).json(deletedCard);
+};
+export { getAllCards, createCard, updateCard, deleteCard };
