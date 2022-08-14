@@ -9,20 +9,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createTaskboard = exports.getAllTasksboards = void 0;
+exports.deleteTaskboard = exports.updateTaskboard = exports.createTaskboard = exports.getAllTasksboards = void 0;
 const client_1 = require("@prisma/client");
 const http_status_codes_1 = require("http-status-codes");
+const prisma = new client_1.PrismaClient();
 const getAllTasksboards = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const prisma = new client_1.PrismaClient();
     const allTasksboards = yield prisma.taskboard.findMany({});
     res.status(http_status_codes_1.StatusCodes.OK).json(allTasksboards);
 });
 exports.getAllTasksboards = getAllTasksboards;
 const createTaskboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const prisma = new client_1.PrismaClient();
+    const { taskboardTitle } = req.body;
     const newTaskboard = yield prisma.taskboard.create({
-        data: req.body,
+        data: {
+            boardTitle: taskboardTitle,
+        },
     });
     res.status(http_status_codes_1.StatusCodes.CREATED).json(newTaskboard);
 });
 exports.createTaskboard = createTaskboard;
+const updateTaskboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskboardId } = req.params;
+    const { taskboardTitle } = req.body;
+    const updatedTaskboard = yield prisma.taskboard.update({
+        where: {
+            id: Number(taskboardId),
+        },
+        data: {
+            boardTitle: taskboardTitle,
+        },
+    });
+    res.status(http_status_codes_1.StatusCodes.OK).json(updatedTaskboard);
+});
+exports.updateTaskboard = updateTaskboard;
+const deleteTaskboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskboardId } = req.params;
+    const deletedTaskboard = yield prisma.taskboard.delete({
+        where: {
+            id: Number(taskboardId),
+        },
+    });
+    res.status(http_status_codes_1.StatusCodes.OK).json(deletedTaskboard);
+});
+exports.deleteTaskboard = deleteTaskboard;

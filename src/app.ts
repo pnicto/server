@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 // routes
-import tasksRouter from "./routes/tasksRouter";
+import tasksRouter from "./routes/tasksBoardRouter";
 app.use("/api/tasksboards", tasksRouter);
 
 app.listen(process.env.PORT, () => {

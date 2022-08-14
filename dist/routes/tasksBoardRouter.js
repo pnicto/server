@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const tasksController_1 = require("../controllers/tasksController");
+const tasksBoardController_1 = require("../controllers/tasksBoardController");
 const router = (0, express_1.Router)();
 /*
   API SCHEMA
@@ -19,6 +19,6 @@ const router = (0, express_1.Router)();
           Delete a card in a taskboard
           Delete a task in card
 */
-router.get("/", tasksController_1.getAllTasksboards);
-router.post("/", tasksController_1.createTaskboard);
+router.get("/", tasksBoardController_1.getAllTasksboards).post("/", tasksBoardController_1.createTaskboard);
+router.patch("/:taskboardId", tasksBoardController_1.updateTaskboard).delete("/:taskboardId", tasksBoardController_1.deleteTaskboard);
 exports.default = router;

@@ -2,7 +2,10 @@ import { Router } from "express";
 import {
   getAllTasksboards,
   createTaskboard,
-} from "../controllers/tasksController";
+  updateTaskboard,
+  deleteTaskboard,
+} from "../controllers/tasksBoardController";
+
 const router = Router();
 /*
   API SCHEMA
@@ -20,7 +23,7 @@ const router = Router();
           Delete a card in a taskboard
           Delete a task in card
 */
-router.get("/", getAllTasksboards);
-router.post("/", createTaskboard);
+router.get("/", getAllTasksboards).post("/", createTaskboard);
+router.patch("/:taskboardId", updateTaskboard).delete("/:taskboardId", deleteTaskboard);
 
 export default router;
