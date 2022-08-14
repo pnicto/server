@@ -18,7 +18,7 @@ model Taskboard {
 
 model Taskcard {
   id          Int       @id @default(autoincrement())
-  cardTitle   String
+  cardTitle   String    @default("New List")
   taskBoard   Taskboard @relation(fields: [taskboardId], references: [id])
   taskboardId Int
   Task        Task[]
