@@ -19,6 +19,6 @@ const router = (0, express_1.Router)();
           Delete a card in a taskboard
           Delete a task in card
 */
-router.get("/", tasksBoardController_1.getAllTasksboards).post("/", tasksBoardController_1.createTaskboard);
-router.patch("/:taskboardId", tasksBoardController_1.updateTaskboard).delete("/:taskboardId", tasksBoardController_1.deleteTaskboard);
+router.route("/").get(tasksBoardController_1.getAllTasksboards).post(tasksBoardController_1.createTaskboard);
+router.route("/:taskboardId").patch(tasksBoardController_1.updateTaskboard).delete(tasksBoardController_1.deleteTaskboard);
 exports.default = router;

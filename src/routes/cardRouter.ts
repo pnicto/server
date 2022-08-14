@@ -7,7 +7,7 @@ import {
 } from "../controllers/cardController";
 
 const router = Router();
-router.get("/", getAllCards).post("/", createCard);
-router.patch("/:taskcardId", updateCard).delete("/:taskcardId", deleteCard);
+router.route("/").get(getAllCards).post(createCard);
+router.route("/:taskcardId").patch(updateCard).delete(deleteCard);
 
 export default router;

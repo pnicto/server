@@ -23,7 +23,7 @@ const router = Router();
           Delete a card in a taskboard
           Delete a task in card
 */
-router.get("/", getAllTasksboards).post("/", createTaskboard);
-router.patch("/:taskboardId", updateTaskboard).delete("/:taskboardId", deleteTaskboard);
+router.route("/").get(getAllTasksboards).post(createTaskboard);
+router.route("/:taskboardId").patch(updateTaskboard).delete(deleteTaskboard);
 
 export default router;
