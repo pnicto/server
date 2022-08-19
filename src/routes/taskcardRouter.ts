@@ -4,7 +4,7 @@ import {
   deleteCard,
   getAllCards,
   updateCard,
-} from "../controllers/cardController";
+} from "../controllers/taskcardController";
 
 const router = Router();
 router.route("/").get(getAllCards).post(createCard);

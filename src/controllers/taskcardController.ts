@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 
 const prisma = new PrismaClient();
-const getAllCards = async (req: Request, res: Response) => {
+export const getAllCards = async (req: Request, res: Response) => {
   const { taskboardId } = req.body;
   const allCards = await prisma.taskcard.findMany({
     where: {
@@ -13,7 +13,7 @@ const getAllCards = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json(allCards);
 };
 
-const createCard = async (req: Request, res: Response) => {
+export const createCard = async (req: Request, res: Response) => {
   const { taskboardId, cardTitle } = req.body;
   const newTaskCard = await prisma.taskcard.create({
     data: {
@@ -24,7 +24,7 @@ const createCard = async (req: Request, res: Response) => {
   res.status(StatusCodes.CREATED).json(newTaskCard);
 };
 
-const updateCard = async (req: Request, res: Response) => {
+export const updateCard = async (req: Request, res: Response) => {
   const { taskboardId, cardTitle } = req.body;
   const { taskcardId } = req.params;
   const updatedCard = await prisma.taskcard.update({
@@ -39,7 +39,7 @@ const updateCard = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json(updatedCard);
 };
 
-const deleteCard = async (req: Request, res: Response) => {
+export const deleteCard = async (req: Request, res: Response) => {
   const { taskcardId } = req.params;
   const deletedCard = await prisma.taskcard.delete({
     where: {
@@ -48,4 +48,3 @@ const deleteCard = async (req: Request, res: Response) => {
   });
   res.status(StatusCodes.OK).json(deletedCard);
 };
-export { getAllCards, createCard, updateCard, deleteCard };
