@@ -19,7 +19,7 @@ model Taskboard {
 model Taskcard {
   id          Int       @id @default(autoincrement())
   cardTitle   String    @default("New List")
-  taskBoard   Taskboard @relation(fields: [taskboardId], references: [id])
+  taskBoard   Taskboard @relation(fields: [taskboardId], references: [id], onDelete: Cascade)
   taskboardId Int
   Task        Task[]
 }
@@ -30,6 +30,6 @@ model Task {
   title       String
   description String?
   completed   Boolean? @default(false)
-  taskCard    Taskcard @relation(fields: [taskcardId], references: [id])
+  taskCard    Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
   taskcardId  Int
 }
