@@ -9,12 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteCard = exports.updateCard = exports.createCard = exports.getAllCards = void 0;
+exports.clearAllTaskcards = exports.deleteCard = exports.updateCard = exports.createCard = exports.getAllCards = void 0;
 const client_1 = require("@prisma/client");
 const http_status_codes_1 = require("http-status-codes");
 const prisma = new client_1.PrismaClient();
 const getAllCards = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { taskboardId } = req.body;
+    const { taskboardId } = req.params;
     const allCards = yield prisma.taskcard.findMany({
         where: {
             taskboardId: Number(taskboardId),
@@ -24,7 +24,8 @@ const getAllCards = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getAllCards = getAllCards;
 const createCard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { taskboardId, cardTitle } = req.body;
+    const { taskboardId } = req.params;
+    const { cardTitle } = req.body;
     const newTaskCard = yield prisma.taskcard.create({
         data: {
             cardTitle: cardTitle,
@@ -35,7 +36,8 @@ const createCard = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.createCard = createCard;
 const updateCard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { taskboardId, cardTitle } = req.body;
+    const { cardTitle } = req.body;
+    // const { taskboardId, cardTitle } = req.body;
     const { taskcardId } = req.params;
     const updatedCard = yield prisma.taskcard.update({
         where: {
@@ -43,8 +45,8 @@ const updateCard = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         },
         data: {
             cardTitle: cardTitle,
-            taskboardId: Number(taskboardId),
         },
+        // taskboardId: Number(taskboardId),
     });
     res.status(http_status_codes_1.StatusCodes.OK).json(updatedCard);
 });
@@ -59,3 +61,13 @@ const deleteCard = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     res.status(http_status_codes_1.StatusCodes.OK).json(deletedCard);
 });
 exports.deleteCard = deleteCard;
+const clearAllTaskcards = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { taskboardId } = req.params;
+    const clearedTaskcards = yield prisma.taskcard.deleteMany({
+        where: {
+            taskboardId: Number(taskboardId),
+        },
+    });
+    res.status(http_status_codes_1.StatusCodes.OK).json(clearedTaskcards);
+});
+exports.clearAllTaskcards = clearAllTaskcards;
