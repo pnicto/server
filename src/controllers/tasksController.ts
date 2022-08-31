@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 const prisma = new PrismaClient();
 
 export const getAllTasks = async (req: Request, res: Response) => {
-  const { taskcardId } = req.body;
+  const { taskcardId } = req.params;
   const allTasks = await prisma.task.findMany({
     where: {
       taskcardId: Number(taskcardId),
@@ -15,11 +15,12 @@ export const getAllTasks = async (req: Request, res: Response) => {
 };
 
 export const createTask = async (req: Request, res: Response) => {
-  const { taskcardId, taskTitle, description, completed } = req.body;
+  const { taskcardId } = req.params;
+  const { taskTitle, description, completed } = req.body;
   const newTask = await prisma.task.create({
     data: {
       title: taskTitle,
-      taskcardId: taskcardId,
+      taskcardId: Number(taskcardId),
       description: description,
       completed: completed,
     },
@@ -53,4 +54,3 @@ export const deleteTask = async (req: Request, res: Response) => {
   });
   res.status(StatusCodes.OK).json(deletedTask);
 };
-

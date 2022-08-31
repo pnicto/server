@@ -14,7 +14,7 @@ const client_1 = require("@prisma/client");
 const http_status_codes_1 = require("http-status-codes");
 const prisma = new client_1.PrismaClient();
 const getAllTasks = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { taskcardId } = req.body;
+    const { taskcardId } = req.params;
     const allTasks = yield prisma.task.findMany({
         where: {
             taskcardId: Number(taskcardId),
@@ -24,11 +24,12 @@ const getAllTasks = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.getAllTasks = getAllTasks;
 const createTask = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { taskcardId, taskTitle, description, completed } = req.body;
+    const { taskcardId } = req.params;
+    const { taskTitle, description, completed } = req.body;
     const newTask = yield prisma.task.create({
         data: {
             title: taskTitle,
-            taskcardId: taskcardId,
+            taskcardId: Number(taskcardId),
             description: description,
             completed: completed,
         },
