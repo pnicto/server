@@ -41,5 +41,6 @@ model User {
   createdAt  DateTime    @default(now())
   username   String
   email      String
+  password   String
   taskboards Taskboard[]
 }
