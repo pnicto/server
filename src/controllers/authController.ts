@@ -18,25 +18,37 @@ prisma.$use(async (params, next) => {
     user.password = hashedPassword;
     params.args.data = user;
     const result = await next(params);
+    console.log(result);
     return result;
   }
+  return await next(params);
 });
 
 export const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body as authRequestBody;
-  const newUser = await prisma.user.create({
-    data: {
-      username,
-      email,
-      password,
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: email,
     },
   });
 
-  res.status(StatusCodes.CREATED).json({
-    username,
-    email,
-    password: newUser.password,
-  });
+  if (existingUser) {
+    res.status(StatusCodes.BAD_REQUEST).json({ msg: "User already exists" });
+  } else {
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password,
+      },
+    });
+
+    res.status(StatusCodes.CREATED).json({
+      username,
+      email,
+      password: newUser.password,
+    });
+  }
 };
 
 export const login = async (req: Request, res: Response) => {};

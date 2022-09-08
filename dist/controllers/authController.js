@@ -25,23 +25,35 @@ prisma.$use((params, next) => __awaiter(void 0, void 0, void 0, function* () {
         user.password = hashedPassword;
         params.args.data = user;
         const result = yield next(params);
+        console.log(result);
         return result;
     }
+    return yield next(params);
 }));
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, email, password } = req.body;
-    const newUser = yield prisma.user.create({
-        data: {
-            username,
-            email,
-            password,
+    const existingUser = yield prisma.user.findFirst({
+        where: {
+            email: email,
         },
     });
-    res.status(http_status_codes_1.StatusCodes.CREATED).json({
-        username,
-        email,
-        password: newUser.password,
-    });
+    if (existingUser) {
+        res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json({ msg: "User already exists" });
+    }
+    else {
+        const newUser = yield prisma.user.create({
+            data: {
+                username,
+                email,
+                password,
+            },
+        });
+        res.status(http_status_codes_1.StatusCodes.CREATED).json({
+            username,
+            email,
+            password: newUser.password,
+        });
+    }
 });
 exports.register = register;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () { });
