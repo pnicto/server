@@ -14,12 +14,11 @@ app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use((0, morgan_1.default)("tiny"));
 // routes
-const taskboardRouter_1 = __importDefault(require("./routes/taskboardRouter"));
-const taskcardRouter_1 = __importDefault(require("./routes/taskcardRouter"));
-const tasksRouter_1 = __importDefault(require("./routes/tasksRouter"));
-app.use("/api/taskboards", taskboardRouter_1.default);
-app.use("/api/taskcards", taskcardRouter_1.default);
-app.use("/api/tasks", tasksRouter_1.default);
+const routes_1 = require("./routes");
+app.use("/api/taskboards", routes_1.taskboardRouter);
+app.use("/api/taskcards", routes_1.taskcardRouter);
+app.use("/api/tasks", routes_1.tasksRouter);
+app.use("/user", routes_1.authRouter);
 app.listen(process.env.PORT, () => {
     console.log(`Server is running at port ${process.env.PORT}...`);
 });

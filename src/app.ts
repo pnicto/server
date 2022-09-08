@@ -12,13 +12,17 @@ app.use(express.json());
 app.use(morgan("tiny"));
 
 // routes
-import taskboardRouter from "./routes/taskboardRouter";
-import taskcardRouter from "./routes/taskcardRouter";
-import tasksRouter from "./routes/tasksRouter";
+import {
+  authRouter,
+  taskboardRouter,
+  taskcardRouter,
+  tasksRouter,
+} from "./routes";
 
 app.use("/api/taskboards", taskboardRouter);
 app.use("/api/taskcards", taskcardRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/user", authRouter);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running at port ${process.env.PORT}...`);
