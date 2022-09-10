@@ -9,11 +9,11 @@ import morgan from "morgan";
 
 app.use(cors());
 app.use(express.json());
-app.use(morgan("tiny"));
+app.use(morgan("dev"));
 
 // custom middleware
 import { authenticateToken } from "./middleware/authenticateToken";
-
+app.use("/api/*", authenticateToken);
 // routes
 import {
   authRouter,
@@ -22,7 +22,7 @@ import {
   tasksRouter,
 } from "./routes";
 
-app.use("/api/taskboards", authenticateToken, taskboardRouter);
+app.use("/api/taskboards", taskboardRouter);
 app.use("/api/taskcards", taskcardRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/user", authRouter);
