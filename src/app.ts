@@ -11,6 +11,9 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("tiny"));
 
+// custom middleware
+import { authenticateToken } from "./middleware/authenticateToken";
+
 // routes
 import {
   authRouter,
@@ -19,7 +22,7 @@ import {
   tasksRouter,
 } from "./routes";
 
-app.use("/api/taskboards", taskboardRouter);
+app.use("/api/taskboards", authenticateToken, taskboardRouter);
 app.use("/api/taskcards", taskcardRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/user", authRouter);

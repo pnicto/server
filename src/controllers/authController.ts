@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { Prisma, PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
 import bcryptjs from "bcryptjs";
-const prisma = new PrismaClient();
+import prisma from "../client";
+import jwt from "jsonwebtoken";
 
 type authRequestBody = {
   username: string;
@@ -18,7 +18,7 @@ prisma.$use(async (params, next) => {
     user.password = hashedPassword;
     params.args.data = user;
     const result = await next(params);
-    console.log(result);
+
     return result;
   }
   return await next(params);
@@ -43,10 +43,15 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
+    const accessToken = jwt.sign(
+      { userId: newUser.id },
+      process.env.JWT_SECRET as string
+    );
+
     res.status(StatusCodes.CREATED).json({
       username,
       email,
-      password: newUser.password,
+      accessToken,
     });
   }
 };
