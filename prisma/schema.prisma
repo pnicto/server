@@ -12,7 +12,7 @@ datasource db {
 
 model Taskboard {
   id         Int        @id @default(autoincrement())
-  boardTitle String?    @default("New Board")
+  boardTitle String?
   Taskcard   Taskcard[]
   User       User?      @relation(fields: [userId], references: [id])
   userId     Int?
@@ -20,7 +20,7 @@ model Taskboard {
 
 model Taskcard {
   id          Int       @id @default(autoincrement())
-  cardTitle   String    @default("New List")
+  cardTitle   String
   taskBoard   Taskboard @relation(fields: [taskboardId], references: [id], onDelete: Cascade)
   taskboardId Int
   Task        Task[]
@@ -33,6 +33,7 @@ model Task {
   description String?
   completed   Boolean? @default(false)
   taskCard    Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
+  priority    Priority @default(NO_PRIORITY)
   taskcardId  Int
 }
 
@@ -40,7 +41,14 @@ model User {
   id         Int         @id @default(autoincrement())
   createdAt  DateTime    @default(now())
   username   String
-  email      String
+  email      String      @unique
   password   String
   taskboards Taskboard[]
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+  NO_PRIORITY
 }
