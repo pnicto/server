@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import prisma from "../client";
 
-const prisma = new PrismaClient();
 
 export const getAllCards = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;

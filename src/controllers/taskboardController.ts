@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
-
-const prisma = new PrismaClient();
+import prisma from "../client";
 
 export const getAllTaskboards = async (req: Request, res: Response) => {
   const allTasksboards = await prisma.taskboard.findMany({});
@@ -11,12 +9,13 @@ export const getAllTaskboards = async (req: Request, res: Response) => {
 
 export const createTaskboard = async (req: Request, res: Response) => {
   const { taskboardTitle } = req.body;
+
   const newTaskboard = await prisma.taskboard.create({
     data: {
       boardTitle: taskboardTitle,
     },
   });
-  res.status(StatusCodes.CREATED).json(newTaskboard);
+  return res.status(StatusCodes.CREATED).json(newTaskboard);
 };
 
 export const updateTaskboard = async (req: Request, res: Response) => {
