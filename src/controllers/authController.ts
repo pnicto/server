@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import bcryptjs from "bcryptjs";
 import prisma from "../client";
-import jwt from "jsonwebtoken";
+import { BadRequestError } from "../errors/badRequestError";
+import { generateJWT } from "../utils/generateJWT";
 
 type authRequestBody = {
   username: string;
@@ -10,6 +11,7 @@ type authRequestBody = {
   password: string;
 };
 
+// TODO:Refresh tokens
 prisma.$use(async (params, next) => {
   if (params.model === "User" && params.action === "create") {
     const user = params.args.data as authRequestBody;
@@ -32,28 +34,57 @@ export const register = async (req: Request, res: Response) => {
     },
   });
 
+  if (!username || !email || !password) {
+    throw new BadRequestError("Please provide the required values.");
+  }
+
   if (existingUser) {
-    res.status(StatusCodes.BAD_REQUEST).json({ msg: "User already exists" });
-  } else {
-    const newUser = await prisma.user.create({
-      data: {
-        username,
-        email,
-        password,
-      },
-    });
+    throw new BadRequestError("User already exists");
+  }
 
-    const accessToken = jwt.sign(
-      { userId: newUser.id },
-      process.env.JWT_SECRET as string
-    );
-
-    res.status(StatusCodes.CREATED).json({
+  const newUser = await prisma.user.create({
+    data: {
       username,
       email,
-      accessToken,
-    });
-  }
+      password,
+    },
+  });
+
+  const accessToken = generateJWT({ userId: newUser.id });
+
+  res.status(StatusCodes.CREATED).json({
+    username,
+    email,
+    accessToken,
+  });
 };
 
-export const login = async (req: Request, res: Response) => {};
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body as authRequestBody;
+
+  if (!email || !password) {
+    throw new BadRequestError("Please provide the required credentials.");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+  console.log(user);
+
+  if (!user) {
+    throw new BadRequestError("User is not registered.");
+  }
+
+  const isPasswordCorrect = await bcryptjs.compare(password, user.password);
+  console.log(isPasswordCorrect);
+
+  if (!isPasswordCorrect) {
+    // TODO:throw unauthorized error
+  }
+  const accessToken = generateJWT({ userId: user.id });
+  console.log(accessToken);
+
+  res.status(StatusCodes.OK).json({ email, accessToken });
+};
