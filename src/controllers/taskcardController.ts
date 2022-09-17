@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import prisma from "../client";
-
+import { BadRequestError } from "../errors/badRequestError";
 
 export const getAllCards = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
   const allCards = await prisma.taskcard.findMany({
     where: {
       taskboardId: Number(taskboardId),
+      userId: req.userId,
     },
   });
   res.status(StatusCodes.OK).json(allCards);
@@ -16,10 +17,23 @@ export const getAllCards = async (req: Request, res: Response) => {
 export const createCard = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
   const { cardTitle } = req.body;
+  // verification that the same user is making changes
+  const taskboard = await prisma.taskboard.findFirst({
+    where: {
+      id: Number(taskboardId),
+    },
+  });
+  const originalOwnerId = taskboard?.userId;
+
+  if (originalOwnerId !== req.userId) {
+    throw new BadRequestError("Action not allowed");
+  }
+
   const newTaskCard = await prisma.taskcard.create({
     data: {
       cardTitle: cardTitle,
       taskboardId: Number(taskboardId),
+      userId: req.userId as number,
     },
   });
   res.status(StatusCodes.CREATED).json(newTaskCard);
@@ -27,8 +41,20 @@ export const createCard = async (req: Request, res: Response) => {
 
 export const updateCard = async (req: Request, res: Response) => {
   const { cardTitle } = req.body;
-  // const { taskboardId, cardTitle } = req.body;
+
   const { taskcardId } = req.params;
+
+  const taskcard = await prisma.taskcard.findFirst({
+    where: {
+      id: Number(taskcardId),
+    },
+  });
+  const originalOwnerId = taskcard?.userId;
+
+  if (originalOwnerId !== req.userId) {
+    throw new BadRequestError("Action not allowed");
+  }
+
   const updatedCard = await prisma.taskcard.update({
     where: {
       id: Number(taskcardId),
@@ -36,13 +62,24 @@ export const updateCard = async (req: Request, res: Response) => {
     data: {
       cardTitle: cardTitle,
     },
-    // taskboardId: Number(taskboardId),
   });
   res.status(StatusCodes.OK).json(updatedCard);
 };
 
 export const deleteCard = async (req: Request, res: Response) => {
   const { taskcardId } = req.params;
+
+  const taskcard = await prisma.taskcard.findFirst({
+    where: {
+      id: Number(taskcardId),
+    },
+  });
+  const originalOwnerId = taskcard?.userId;
+
+  if (originalOwnerId !== req.userId) {
+    throw new BadRequestError("Action not allowed");
+  }
+
   const deletedCard = await prisma.taskcard.delete({
     where: {
       id: Number(taskcardId),
@@ -53,6 +90,18 @@ export const deleteCard = async (req: Request, res: Response) => {
 
 export const clearAllTaskcards = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
+
+  const taskboard = await prisma.taskcard.findFirst({
+    where: {
+      id: Number(taskboardId),
+    },
+  });
+  const originalOwnerId = taskboard?.userId;
+
+  if (originalOwnerId !== req.userId) {
+    throw new BadRequestError("Action not allowed");
+  }
+
   const clearedTaskcards = await prisma.taskcard.deleteMany({
     where: {
       taskboardId: Number(taskboardId),

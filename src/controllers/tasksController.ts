@@ -21,6 +21,7 @@ export const createTask = async (req: Request, res: Response) => {
       taskcardId: Number(taskcardId),
       description: description,
       completed: completed,
+      userId: Number(req.userId),
     },
   });
   res.status(StatusCodes.CREATED).json(newTask);
