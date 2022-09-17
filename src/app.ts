@@ -8,10 +8,12 @@ dotenv.config();
 // middleware
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
-app.use(cors());
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cookieParser());
 
 // custom middleware
 import { authenticateToken } from "./middleware/authenticateToken";
