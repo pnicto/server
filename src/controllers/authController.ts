@@ -4,6 +4,7 @@ import bcryptjs from "bcryptjs";
 import prisma from "../client";
 import { BadRequestError } from "../errors/badRequestError";
 import { generateJWT } from "../utils/generateJWT";
+import { UnauthorizedError } from "../errors/unauthorizedError";
 
 type authRequestBody = {
   username: string;
@@ -71,20 +72,26 @@ export const login = async (req: Request, res: Response) => {
       email,
     },
   });
-  console.log(user);
 
   if (!user) {
     throw new BadRequestError("User is not registered.");
   }
 
   const isPasswordCorrect = await bcryptjs.compare(password, user.password);
-  console.log(isPasswordCorrect);
-
   if (!isPasswordCorrect) {
-    // TODO:throw unauthorized error
+    throw new UnauthorizedError("Password is invalid");
   }
+
   const accessToken = generateJWT({ userId: user.id });
   console.log(accessToken);
 
-  res.status(StatusCodes.OK).json({ email, accessToken });
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: true,
+  });
+
+  res.status(StatusCodes.OK).json({
+    user: { email, id: user.id, username: user.username },
+    accessToken,
+  });
 };
