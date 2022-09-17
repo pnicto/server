@@ -7,18 +7,15 @@ export const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer")) {
+  const { accessToken } = req.cookies;
+  if (!accessToken) {
     throw new BadRequestError("Token missing");
   }
-  const token = authHeader.split(" ")[1];
 
   const { userId } = jwt.verify(
-    token,
+    accessToken,
     process.env.JWT_SECRET as string
   ) as jwt.JwtPayload;
-  console.log(userId);
   req.userId = userId;
 
   next();
