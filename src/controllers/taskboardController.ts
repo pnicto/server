@@ -58,7 +58,7 @@ export const updateTaskboard = async (req: Request, res: Response) => {
 export const deleteTaskboard = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
 
-  const taskboardToBeDeleted = await prisma.taskcard.findFirst({
+  const taskboardToBeDeleted = await prisma.taskboard.findFirst({
     where: {
       id: Number(taskboardId),
     },
