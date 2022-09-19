@@ -15,10 +15,6 @@ export const getAllTaskboards = async (req: Request, res: Response) => {
 export const createTaskboard = async (req: Request, res: Response) => {
   const { taskboardTitle } = req.body;
 
-  if (!taskboardTitle) {
-    throw new BadRequestError("Taskboard title cannot be empty");
-  }
-
   const newTaskboard = await prisma.taskboard.create({
     data: {
       boardTitle: taskboardTitle,
