@@ -107,3 +107,12 @@ export const login = async (req: Request, res: Response) => {
     accessToken,
   });
 };
+
+export const logout = async (req: Request, res: Response) => {
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    secure: true,
+  });
+
+  res.status(StatusCodes.OK).send();
+};
