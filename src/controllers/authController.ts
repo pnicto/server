@@ -9,16 +9,19 @@ import { UnauthorizedError } from "../errors/unauthorizedError";
 type authRequestBody = {
   username: string;
   email: string;
-  password: string;
+  password?: string;
+  iss?: "https://accounts.google.com";
 };
 
 // TODO:Refresh tokens
 prisma.$use(async (params, next) => {
   if (params.model === "User" && params.action === "create") {
     const user = params.args.data as authRequestBody;
-    const salt = await bcryptjs.genSalt();
-    const hashedPassword = await bcryptjs.hash(user.password, salt);
-    user.password = hashedPassword;
+    if (user.password) {
+      const salt = await bcryptjs.genSalt();
+      const hashedPassword = await bcryptjs.hash(user.password, salt);
+      user.password = hashedPassword;
+    }
     params.args.data = user;
     const result = await next(params);
 
@@ -28,14 +31,19 @@ prisma.$use(async (params, next) => {
 });
 
 export const register = async (req: Request, res: Response) => {
-  const { username, email, password } = req.body as authRequestBody;
+  const { username, email, iss, password } = req.body as authRequestBody;
+
   const existingUser = await prisma.user.findFirst({
     where: {
       email: email,
     },
   });
 
-  if (!username || !email || !password) {
+  if (
+    !username ||
+    !email ||
+    (iss !== "https://accounts.google.com" && !password)
+  ) {
     throw new BadRequestError("Please provide the required values.");
   }
 
@@ -61,9 +69,9 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body as authRequestBody;
+  const { email, password, iss } = req.body as authRequestBody;
 
-  if (!email || !password) {
+  if (!email || (iss !== "https://accounts.google.com" && !password)) {
     throw new BadRequestError("Please provide the required credentials.");
   }
 
@@ -77,13 +85,17 @@ export const login = async (req: Request, res: Response) => {
     throw new BadRequestError("User is not registered.");
   }
 
-  const isPasswordCorrect = await bcryptjs.compare(password, user.password);
-  if (!isPasswordCorrect) {
-    throw new UnauthorizedError("Password is invalid");
+  if (user.password) {
+    const isPasswordCorrect = await bcryptjs.compare(
+      password as string,
+      user.password
+    );
+    if (!isPasswordCorrect) {
+      throw new UnauthorizedError("Password is invalid");
+    }
   }
 
   const accessToken = generateJWT({ userId: user.id });
-  console.log(accessToken);
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
