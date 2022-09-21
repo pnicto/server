@@ -4,12 +4,24 @@ import { BadRequestError } from "../errors/badRequestError";
 import prisma from "../client";
 
 export const getAllTaskboards = async (req: Request, res: Response) => {
-  const allTasksboards = await prisma.taskboard.findMany({
+  const usersTaskboards = await prisma.taskboard.findMany({
     where: {
       userId: req.userId,
     },
   });
-  res.status(StatusCodes.OK).json(allTasksboards);
+
+  const sharedTaskboards = await prisma.taskboard.findMany({
+    where: {
+      sharedUsers: {
+        has: req.userId,
+      },
+    },
+  });
+
+  res.status(StatusCodes.OK).json({
+    usersTaskboards,
+    sharedTaskboards,
+  });
 };
 
 export const createTaskboard = async (req: Request, res: Response) => {
@@ -27,13 +39,32 @@ export const createTaskboard = async (req: Request, res: Response) => {
 
 export const updateTaskboard = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
-  const { taskboardTitle } = req.body;
+  const {
+    taskboardTitle,
+    emails,
+  }: {
+    taskboardTitle: string;
+    emails: string[];
+  } = req.body;
+  const sharedIds: number[] = [];
 
-  const taskboardToBeUpdated = await prisma.taskcard.findFirst({
+  const taskboardToBeUpdated = await prisma.taskboard.findFirst({
     where: {
       id: Number(taskboardId),
     },
   });
+
+  if (emails) {
+    for (const email of emails) {
+      const sharedUser = await prisma.user.findFirst({
+        where: {
+          email,
+        },
+      });
+      sharedIds.push(sharedUser?.id as number);
+    }
+  }
+
   const originalOwnerId = taskboardToBeUpdated?.userId;
 
   if (originalOwnerId !== req.userId) {
@@ -46,6 +77,7 @@ export const updateTaskboard = async (req: Request, res: Response) => {
     },
     data: {
       boardTitle: taskboardTitle,
+      sharedUsers: sharedIds,
     },
   });
   res.status(StatusCodes.OK).json(updatedTaskboard);
