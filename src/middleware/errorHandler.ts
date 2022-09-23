@@ -13,5 +13,5 @@ export const errorHandler: ErrorRequestHandler = async (
   }
   return res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({ msg: "Something went wrong" });
+    .json({ msg: err.message });
 };
