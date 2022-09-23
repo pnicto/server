@@ -4,7 +4,7 @@ import { BadRequestError } from "../errors/badRequestError";
 import prisma from "../client";
 
 export const getAllTaskboards = async (req: Request, res: Response) => {
-  const usersTaskboards = await prisma.taskboard.findMany({
+  const userTaskboards = await prisma.taskboard.findMany({
     where: {
       userId: req.userId,
     },
@@ -19,7 +19,7 @@ export const getAllTaskboards = async (req: Request, res: Response) => {
   });
 
   res.status(StatusCodes.OK).json({
-    usersTaskboards,
+    userTaskboards,
     sharedTaskboards,
   });
 };
@@ -53,6 +53,11 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       id: Number(taskboardId),
     },
   });
+  const originalOwnerId = taskboardToBeUpdated?.userId;
+
+  if (originalOwnerId !== req.userId) {
+    throw new BadRequestError("Action not allowed");
+  }
 
   if (emails) {
     for (const email of emails) {
@@ -63,24 +68,27 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       });
       sharedIds.push(sharedUser?.id as number);
     }
+    const updatedTaskboard = await prisma.taskboard.update({
+      where: {
+        id: Number(taskboardId),
+      },
+      data: {
+        boardTitle: taskboardTitle,
+        sharedUsers: sharedIds,
+      },
+    });
+    return res.status(StatusCodes.OK).json(updatedTaskboard);
+  } else {
+    const updatedTaskboard = await prisma.taskboard.update({
+      where: {
+        id: Number(taskboardId),
+      },
+      data: {
+        boardTitle: taskboardTitle,
+      },
+    });
+    return res.status(StatusCodes.OK).json(updatedTaskboard);
   }
-
-  const originalOwnerId = taskboardToBeUpdated?.userId;
-
-  if (originalOwnerId !== req.userId) {
-    throw new BadRequestError("Action not allowed");
-  }
-
-  const updatedTaskboard = await prisma.taskboard.update({
-    where: {
-      id: Number(taskboardId),
-    },
-    data: {
-      boardTitle: taskboardTitle,
-      sharedUsers: sharedIds,
-    },
-  });
-  res.status(StatusCodes.OK).json(updatedTaskboard);
 };
 
 export const deleteTaskboard = async (req: Request, res: Response) => {

@@ -4,11 +4,12 @@ import prisma from "../client";
 import { BadRequestError } from "../errors/badRequestError";
 
 export const getAllCards = async (req: Request, res: Response) => {
-  const { taskboardId } = req.params;
+  const { taskboardId, sharedOwnerId } = req.params;
+
   const allCards = await prisma.taskcard.findMany({
     where: {
       taskboardId: Number(taskboardId),
-      userId: req.userId,
+      userId: sharedOwnerId !== undefined ? Number(sharedOwnerId) : req.userId,
     },
   });
   res.status(StatusCodes.OK).json(allCards);
