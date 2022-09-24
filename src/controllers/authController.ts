@@ -1,19 +1,19 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import bcryptjs from "bcryptjs";
-import prisma from "../client";
+import prisma from "../clients/prismaClient";
 import { BadRequestError } from "../errors/badRequestError";
 import { generateJWT } from "../utils/generateJWT";
 import { UnauthorizedError } from "../errors/unauthorizedError";
+import { oauth2Client } from "../clients/googleOauth2Client";
 
 type authRequestBody = {
   username: string;
-  email: string;
+  email?: string;
   password?: string;
-  iss?: "https://accounts.google.com";
+  code?: string;
 };
 
-// TODO:Refresh tokens
 prisma.$use(async (params, next) => {
   if (params.model === "User" && params.action === "create") {
     const user = params.args.data as authRequestBody;
@@ -23,7 +23,7 @@ prisma.$use(async (params, next) => {
       user.password = hashedPassword;
     }
     params.args.data = user;
-    const result = await next(params);
+    const result: any = await next(params);
 
     return result;
   }
@@ -31,7 +31,7 @@ prisma.$use(async (params, next) => {
 });
 
 export const register = async (req: Request, res: Response) => {
-  const { username, email, iss, password } = req.body as authRequestBody;
+  const { username, email, password } = req.body as authRequestBody;
 
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -39,11 +39,7 @@ export const register = async (req: Request, res: Response) => {
     },
   });
 
-  if (
-    !username ||
-    !email ||
-    (iss !== "https://accounts.google.com" && !password)
-  ) {
+  if (!username || !email || !password) {
     throw new BadRequestError("Please provide the required values.");
   }
 
@@ -69,43 +65,91 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  const { email, password, iss } = req.body as authRequestBody;
+  const { email, password, code } = req.body as authRequestBody;
 
-  if (!email || (iss !== "https://accounts.google.com" && !password)) {
-    throw new BadRequestError("Please provide the required credentials.");
-  }
+  if (code) {
+    const { tokens } = await oauth2Client.getToken(code);
+    const decodedPayload = (
+      await oauth2Client.verifyIdToken({
+        idToken: tokens.id_token as string,
+      })
+    ).getPayload();
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+    const user = await prisma.user.findUnique({
+      where: {
+        email: decodedPayload?.email,
+      },
+    });
+    console.log(decodedPayload);
+    if (!user) {
+      const newUser = await prisma.user.create({
+        data: {
+          email: decodedPayload?.email as string,
+          username: decodedPayload?.name as string,
+          password: tokens.refresh_token,
+        },
+      });
+      console.log(newUser);
+      const accessToken = generateJWT({ userId: newUser.id });
 
-  if (!user) {
-    throw new BadRequestError("User is not registered.");
-  }
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+      });
 
-  if (user.password) {
-    const isPasswordCorrect = await bcryptjs.compare(
-      password as string,
-      user.password
-    );
-    if (!isPasswordCorrect) {
-      throw new UnauthorizedError("Password is invalid");
+      return res.status(StatusCodes.OK).json({
+        user: {
+          email: newUser.email,
+          id: newUser.id,
+          username: newUser.username,
+        },
+        accessToken,
+      });
+    } else {
+      const accessToken = generateJWT({ userId: user?.id as number });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      return res.status(StatusCodes.OK).json({
+        user: { email: user.email, id: user?.id, username: user?.username },
+        accessToken,
+      });
+    }
+  } else {
+    if (!email || !password) {
+      throw new BadRequestError("Please provide the required credentials.");
+    }
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      throw new BadRequestError("User is not registered.");
+    } else {
+      const isPasswordCorrect = await bcryptjs.compare(
+        password as string,
+        user.password as string
+      );
+      if (!isPasswordCorrect) {
+        throw new UnauthorizedError("Password is invalid");
+      }
+      const accessToken = generateJWT({ userId: user?.id as number });
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      return res.status(StatusCodes.OK).json({
+        user: { email, id: user?.id, username: user?.username },
+        accessToken,
+      });
     }
   }
-
-  const accessToken = generateJWT({ userId: user.id });
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-  });
-
-  res.status(StatusCodes.OK).json({
-    user: { email, id: user.id, username: user.username },
-    accessToken,
-  });
 };
 
 export const logout = async (req: Request, res: Response) => {
