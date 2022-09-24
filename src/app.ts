@@ -23,11 +23,13 @@ app.use("/api/*", authenticateToken);
 // routes
 import {
   authRouter,
+  githubOauthRouter,
   taskboardRouter,
   taskcardRouter,
   tasksRouter,
 } from "./routes";
 
+app.use("/github/auth", githubOauthRouter);
 app.use("/api/taskboards", taskboardRouter);
 app.use("/api/taskcards", taskcardRouter);
 app.use("/api/tasks", tasksRouter);
