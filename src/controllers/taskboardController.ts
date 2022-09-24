@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { BadRequestError } from "../errors/badRequestError";
-import prisma from "../client";
+import prisma from "../clients/prismaClient";
 
 export const getAllTaskboards = async (req: Request, res: Response) => {
   const userTaskboards = await prisma.taskboard.findMany({

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import prisma from "../client";
+import prisma from "../clients/prismaClient";
 import { StatusCodes } from "http-status-codes";
 
 export const getAllTasks = async (req: Request, res: Response) => {

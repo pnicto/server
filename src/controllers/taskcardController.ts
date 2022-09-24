@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import prisma from "../client";
+import prisma from "../clients/prismaClient";
 import { BadRequestError } from "../errors/badRequestError";
 
 export const getAllCards = async (req: Request, res: Response) => {
