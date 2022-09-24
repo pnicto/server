@@ -11,7 +11,7 @@ model Taskboard {
   id          Int        @id @default(autoincrement())
   boardTitle  String?    @default("New board")
   Taskcard    Taskcard[]
-  User        User       @relation(fields: [userId], references: [id])
+  User        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
   sharedUsers Int[]
 }
@@ -22,7 +22,7 @@ model Taskcard {
   taskBoard   Taskboard @relation(fields: [taskboardId], references: [id], onDelete: Cascade)
   taskboardId Int
   Task        Task[]
-  User        User      @relation(fields: [userId], references: [id])
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
 }
 
@@ -35,7 +35,7 @@ model Task {
   taskCard    Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
   priority    Priority @default(NO_PRIORITY)
   taskcardId  Int
-  User        User     @relation(fields: [userId], references: [id])
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
 }
 
