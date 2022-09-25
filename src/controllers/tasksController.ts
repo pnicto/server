@@ -45,6 +45,10 @@ export const updateTask = async (req: Request, res: Response) => {
     createGoogleTask(req, taskTitle, description);
   }
 
+  if (eventStartDate && eventEndDate) {
+    createGoogleCalendarEvent(req, taskTitle, eventStartDate, eventEndDate);
+  }
+
   const updatedTask = await prisma.task.update({
     where: {
       id: Number(taskId),
@@ -60,6 +64,43 @@ export const updateTask = async (req: Request, res: Response) => {
     },
   });
   res.status(StatusCodes.OK).json(updatedTask);
+};
+
+const createGoogleCalendarEvent = async (
+  req: Request,
+  taskTitle: string,
+  eventStartDate: string,
+  eventEndDate: string
+) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.userId,
+    },
+  });
+
+  oauth2Client.setCredentials({
+    refresh_token: user?.refreshToken,
+  });
+
+  const service = google.calendar({
+    version: "v3",
+    auth: oauth2Client,
+  });
+
+  await service.events.insert({
+    calendarId: "primary",
+    requestBody: {
+      summary: taskTitle,
+      start: {
+        dateTime: eventStartDate,
+        timeZone: "Asia/Kolkata",
+      },
+      end: {
+        dateTime: eventEndDate,
+        timeZone: "Asia/Kolkata",
+      },
+    },
+  });
 };
 
 const createGoogleTask = async (
