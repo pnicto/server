@@ -27,27 +27,31 @@ model Taskcard {
 }
 
 model Task {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  title       String
-  description String?
-  completed   Boolean? @default(false)
-  taskCard    Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
-  priority    Priority @default(NO_PRIORITY)
-  taskcardId  Int
-  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      Int
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  title          String
+  description    String?
+  completed      Boolean? @default(false)
+  taskCard       Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
+  priority       Priority @default(NO_PRIORITY)
+  taskcardId     Int
+  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
+  deadlineDate   String?
+  eventStartDate String?
+  eventEndDate   String?
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  createdAt  DateTime    @default(now())
-  username   String
-  email      String      @unique
-  password   String?
-  taskboards Taskboard[]
-  tasks      Task[]
-  taskcards  Taskcard[]
+  id           Int         @id @default(autoincrement())
+  createdAt    DateTime    @default(now())
+  username     String
+  email        String      @unique
+  password     String?
+  refreshToken String?
+  taskboards   Taskboard[]
+  tasks        Task[]
+  taskcards    Taskcard[]
 }
 
 enum Priority {
