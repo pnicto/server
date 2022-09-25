@@ -80,16 +80,14 @@ export const login = async (req: Request, res: Response) => {
         email: decodedPayload?.email,
       },
     });
-    console.log(decodedPayload);
     if (!user) {
       const newUser = await prisma.user.create({
         data: {
           email: decodedPayload?.email as string,
           username: decodedPayload?.name as string,
-          password: tokens.refresh_token,
+          refreshToken: tokens.refresh_token,
         },
       });
-      console.log(newUser);
       const accessToken = generateJWT({ userId: newUser.id });
 
       res.cookie("accessToken", accessToken, {
@@ -106,6 +104,15 @@ export const login = async (req: Request, res: Response) => {
         accessToken,
       });
     } else {
+      await prisma.user.update({
+        where: {
+          email: decodedPayload?.email as string,
+        },
+        data: {
+          refreshToken: tokens.refresh_token,
+        },
+      });
+
       const accessToken = generateJWT({ userId: user?.id as number });
 
       res.cookie("accessToken", accessToken, {
