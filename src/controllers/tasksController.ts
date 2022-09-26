@@ -5,6 +5,7 @@ import {
   sendEmailNotification,
   createGoogleTask,
   createGoogleCalendarEvent,
+  isClashing,
 } from "../utils/externalServices";
 
 export const getAllTasks = async (req: Request, res: Response) => {
@@ -50,13 +51,15 @@ export const updateTask = async (req: Request, res: Response) => {
   }
 
   if (eventStartDate && eventEndDate) {
-    await createGoogleCalendarEvent(
-      req,
-      taskTitle,
-      eventStartDate,
-      eventEndDate
-    );
+    !(await isClashing(req, eventStartDate, eventEndDate)) &&
+      (await createGoogleCalendarEvent(
+        req,
+        taskTitle,
+        eventStartDate,
+        eventEndDate
+      ));
   }
+
   const oldTask = await prisma.task.findUnique({
     where: {
       id: Number(taskId),
