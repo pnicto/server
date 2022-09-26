@@ -110,3 +110,39 @@ export const sendEmailNotification = async (
     });
   }
 };
+
+export const isClashing = async (
+  req: Request,
+  eventStartDate: string,
+  eventEndDate: string
+) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.userId,
+    },
+  });
+
+  oauth2Client.setCredentials({
+    refresh_token: user?.refreshToken,
+  });
+
+  const service = google.calendar({
+    version: "v3",
+    auth: oauth2Client,
+  });
+
+  const eventsList = (
+    await service.events.list({
+      calendarId: "primary",
+      singleEvents: true,
+      timeMin: eventStartDate,
+      timeMax: eventEndDate,
+    })
+  ).data.items;
+
+  if (eventsList?.length === 0) {
+    return false;
+  } else {
+    return true;
+  }
+};
