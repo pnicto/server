@@ -3,6 +3,7 @@ import prisma from "../clients/prismaClient";
 import { StatusCodes } from "http-status-codes";
 import { oauth2Client } from "../clients/googleOauth2Client";
 import { google } from "googleapis";
+import { SMTPClient } from "emailjs";
 
 export const getAllTasks = async (req: Request, res: Response) => {
   const { taskcardId } = req.params;
@@ -41,6 +42,7 @@ export const updateTask = async (req: Request, res: Response) => {
     eventStartDate,
     eventEndDate,
   } = req.body;
+
   if (deadlineDate) {
     createGoogleTask(req, taskTitle, description);
   }
@@ -48,6 +50,11 @@ export const updateTask = async (req: Request, res: Response) => {
   if (eventStartDate && eventEndDate) {
     createGoogleCalendarEvent(req, taskTitle, eventStartDate, eventEndDate);
   }
+  const oldTask = await prisma.task.findUnique({
+    where: {
+      id: Number(taskId),
+    },
+  });
 
   const updatedTask = await prisma.task.update({
     where: {
@@ -63,6 +70,28 @@ export const updateTask = async (req: Request, res: Response) => {
       eventEndDate,
     },
   });
+
+  const taskboardId = (
+    await prisma.taskcard.findUnique({
+      where: {
+        id: updatedTask.taskcardId,
+      },
+    })
+  )?.taskboardId;
+
+  const taskboard = await prisma.taskboard.findUnique({
+    where: {
+      id: taskboardId,
+    },
+  });
+
+  if (!(JSON.stringify(oldTask) === JSON.stringify(updatedTask))) {
+    sendEmailNotification(
+      taskboard?.boardTitle as string,
+      taskboard?.sharedUsers as number[]
+    );
+  }
+
   res.status(StatusCodes.OK).json(updatedTask);
 };
 
@@ -145,6 +174,33 @@ const createGoogleTask = async (
       due: deadlineDate,
     },
   });
+};
+
+const sendEmailNotification = async (
+  taskboardTitle: string,
+  sharedUsers: number[]
+) => {
+  const client = new SMTPClient({
+    user: process.env.GMAIL,
+    password: process.env.GOOGLE_APP_PASSWORD,
+    host: "smtp.gmail.com",
+    ssl: true,
+  });
+  for (const userId of sharedUsers) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    console.log(
+      await client.sendAsync({
+        text: `The taskboard ${taskboardTitle},which is shared to you by has some changes made by his owner.`,
+        subject: "Notification from taskboard",
+        from: "Taskboards",
+        to: user?.email as string,
+      })
+    );
+  }
 };
 
 export const deleteTask = async (req: Request, res: Response) => {
