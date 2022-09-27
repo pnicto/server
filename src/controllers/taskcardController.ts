@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import prisma from "../clients/prismaClient";
 import { BadRequestError } from "../errors/badRequestError";
+import { sendEmailNotification } from "../utils/externalServices";
 
 export const getAllCards = async (req: Request, res: Response) => {
   const { taskboardId, sharedOwnerId } = req.params;
@@ -37,6 +38,11 @@ export const createCard = async (req: Request, res: Response) => {
       userId: req.userId as number,
     },
   });
+
+  await sendEmailNotification(
+    taskboard?.sharedUsers as number[],
+    `New tasklist  ${newTaskCard?.cardTitle} is created in the board ${taskboard?.boardTitle} by the owner.`
+  );
   res.status(StatusCodes.CREATED).json(newTaskCard);
 };
 
@@ -86,13 +92,24 @@ export const deleteCard = async (req: Request, res: Response) => {
       id: Number(taskcardId),
     },
   });
+
+  const taskboard = await prisma.taskboard.findUnique({
+    where: {
+      id: taskcard?.taskboardId,
+    },
+  });
+
+  await sendEmailNotification(
+    taskboard?.sharedUsers as number[],
+    `New tasklist  ${deletedCard?.cardTitle} is deleted in the board ${taskboard?.boardTitle} by the owner.`
+  );
   res.status(StatusCodes.OK).json(deletedCard);
 };
 
 export const clearAllTaskcards = async (req: Request, res: Response) => {
   const { taskboardId } = req.params;
 
-  const taskboard = await prisma.taskcard.findFirst({
+  const taskboard = await prisma.taskboard.findFirst({
     where: {
       id: Number(taskboardId),
     },
@@ -108,5 +125,10 @@ export const clearAllTaskcards = async (req: Request, res: Response) => {
       taskboardId: Number(taskboardId),
     },
   });
+
+  await sendEmailNotification(
+    taskboard?.sharedUsers as number[],
+    `All the tasklists in the board ${taskboard?.boardTitle} are deleted by the owner.`
+  );
   res.status(StatusCodes.OK).json(clearedTaskcards);
 };

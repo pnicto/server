@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { BadRequestError } from "../errors/badRequestError";
 import prisma from "../clients/prismaClient";
+import { sendEmailNotification } from "../utils/externalServices";
 
 export const getAllTaskboards = async (req: Request, res: Response) => {
   const userTaskboards = await prisma.taskboard.findMany({
@@ -77,8 +78,23 @@ export const updateTaskboard = async (req: Request, res: Response) => {
         sharedUsers: sharedIds,
       },
     });
+
+    const originalOwner = await prisma.user.findUnique({
+      where: {
+        id: originalOwnerId,
+      },
+    });
+
+    await sendEmailNotification(
+      updatedTaskboard?.sharedUsers as number[],
+      `${updatedTaskboard?.boardTitle} is shared with you by ${originalOwner?.email}.`
+    );
     return res.status(StatusCodes.OK).json(updatedTaskboard);
   } else {
+    await sendEmailNotification(
+      taskboardToBeUpdated?.sharedUsers as number[],
+      `Your access to ${taskboardToBeUpdated?.boardTitle} is revoked by the owner.`
+    );
     const updatedTaskboard = await prisma.taskboard.update({
       where: {
         id: Number(taskboardId),
@@ -110,5 +126,10 @@ export const deleteTaskboard = async (req: Request, res: Response) => {
       id: Number(taskboardId),
     },
   });
+
+  await sendEmailNotification(
+    deletedTaskboard?.sharedUsers as number[],
+    `${deletedTaskboard?.boardTitle} is deleted  by the owner.`
+  );
   res.status(StatusCodes.OK).json(deletedTaskboard);
 };
