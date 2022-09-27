@@ -1,12 +1,13 @@
 import { Request } from "express";
 import prisma from "../clients/prismaClient";
 import { oauth2Client } from "../clients/googleOauth2Client";
-import { google } from "googleapis";
+import { google, tasks_v1 } from "googleapis";
 import { SMTPClient } from "emailjs";
+import { Task } from "@prisma/client";
 
-export const createGoogleCalendarEvent = async (
+export const createAndUpdateGoogleCalendarEvent = async (
   req: Request,
-  taskTitle: string,
+  task: Task,
   eventStartDate: string,
   eventEndDate: string
 ) => {
@@ -25,27 +26,127 @@ export const createGoogleCalendarEvent = async (
     auth: oauth2Client,
   });
 
-  await service.events.insert({
-    calendarId: "primary",
-    requestBody: {
-      summary: taskTitle,
-      start: {
-        dateTime: eventStartDate,
-        timeZone: "Asia/Kolkata",
-      },
-      end: {
-        dateTime: eventEndDate,
-        timeZone: "Asia/Kolkata",
-      },
-    },
-  });
+  if (!task.calendarEventId) {
+    return (
+      await service.events.insert({
+        calendarId: "primary",
+        requestBody: {
+          summary: task.title,
+          start: {
+            dateTime: eventStartDate,
+            timeZone: "Asia/Kolkata",
+          },
+          end: {
+            dateTime: eventEndDate,
+            timeZone: "Asia/Kolkata",
+          },
+        },
+      })
+    ).data.id;
+  } else {
+    return (
+      await service.events.update({
+        eventId: task.calendarEventId as string,
+        requestBody: {
+          summary: task.title,
+          start: {
+            dateTime: eventStartDate,
+            timeZone: "Asia/Kolkata",
+          },
+          end: {
+            dateTime: eventEndDate,
+            timeZone: "Asia/Kolkata",
+          },
+        },
+      })
+    ).data.id;
+  }
 };
 
-export const createGoogleTask = async (
+export const deleteGoogleCalendarEvent = async (req: Request, task: Task) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.userId,
+    },
+  });
+
+  oauth2Client.setCredentials({
+    refresh_token: user?.refreshToken,
+  });
+
+  const service = google.calendar({
+    version: "v3",
+    auth: oauth2Client,
+  });
+
+  if (task.calendarEventId) {
+    await service.events.delete({
+      calendarId: "primary",
+      eventId: task.calendarEventId as string,
+    });
+  }
+};
+
+export const createAndUpdateGoogleTask = async (
   req: Request,
-  taskTitle: string,
+  task: Task | null,
   deadlineDate: string
 ) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.userId,
+    },
+  });
+
+  oauth2Client.setCredentials({
+    refresh_token: user?.refreshToken,
+  });
+
+  const service = google.tasks({
+    version: "v1",
+    auth: oauth2Client,
+  });
+
+  const taskLists = (await service.tasklists.list()).data.items;
+  let myTasklist: tasks_v1.Schema$TaskList | undefined;
+
+  myTasklist = taskLists?.find(
+    (taskList) => taskList.title === "taskboard app"
+  );
+
+  if (!myTasklist) {
+    myTasklist = (
+      await service.tasklists.insert({
+        requestBody: {
+          title: "taskboard app",
+        },
+      })
+    ).data;
+  }
+  if (!task?.googleTaskId) {
+    return (
+      await service.tasks.insert({
+        tasklist: myTasklist?.id as string | undefined,
+        requestBody: {
+          title: task?.title,
+          due: task?.deadlineDate,
+        },
+      })
+    ).data.id;
+  } else {
+    return (
+      await service.tasks.update({
+        tasklist: myTasklist?.id as string,
+        requestBody: {
+          title: task.title,
+          due: task.deadlineDate,
+        },
+      })
+    ).data.id;
+  }
+};
+
+export const deleteGoogleTask = async (req: Request, task: Task | null) => {
   const user = await prisma.user.findUnique({
     where: {
       id: req.userId,
@@ -66,28 +167,15 @@ export const createGoogleTask = async (
     (taskList) => taskList.title === "taskboard app"
   );
 
-  if (!myTasklist) {
-    const taskListId = (
-      await service.tasklists.insert({
-        requestBody: {
-          title: "taskboard app",
-        },
-      })
-    ).data.id;
-  }
-
-  await service.tasks.insert({
-    tasklist: myTasklist?.id as string | undefined,
-    requestBody: {
-      title: taskTitle,
-      due: deadlineDate,
-    },
+  await service.tasks.delete({
+    tasklist: myTasklist?.id as string,
+    task: task?.googleTaskId as string,
   });
 };
 
 export const sendEmailNotification = async (
-  taskboardTitle: string,
-  sharedUsers: number[]
+  sharedUsers: number[],
+  message: string
 ) => {
   const client = new SMTPClient({
     user: process.env.GMAIL,
@@ -103,7 +191,7 @@ export const sendEmailNotification = async (
     });
 
     await client.sendAsync({
-      text: `The taskboard ${taskboardTitle},which is shared to you by has some changes made by his owner.`,
+      text: message,
       subject: "Notification from taskboard",
       from: "Taskboards",
       to: user?.email as string,
@@ -114,7 +202,8 @@ export const sendEmailNotification = async (
 export const isClashing = async (
   req: Request,
   eventStartDate: string,
-  eventEndDate: string
+  eventEndDate: string,
+  task: Task | null
 ) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -131,7 +220,7 @@ export const isClashing = async (
     auth: oauth2Client,
   });
 
-  const eventsList = (
+  let eventsList = (
     await service.events.list({
       calendarId: "primary",
       singleEvents: true,
@@ -139,6 +228,9 @@ export const isClashing = async (
       timeMax: eventEndDate,
     })
   ).data.items;
+  eventsList = eventsList?.filter((event) => {
+    event.id !== task?.calendarEventId;
+  });
 
   if (eventsList?.length === 0) {
     return false;

@@ -3,9 +3,11 @@ import prisma from "../clients/prismaClient";
 import { StatusCodes } from "http-status-codes";
 import {
   sendEmailNotification,
-  createGoogleTask,
-  createGoogleCalendarEvent,
+  createAndUpdateGoogleTask,
+  createAndUpdateGoogleCalendarEvent,
   isClashing,
+  deleteGoogleCalendarEvent,
+  deleteGoogleTask,
 } from "../utils/externalServices";
 
 export const getAllTasks = async (req: Request, res: Response) => {
@@ -31,6 +33,24 @@ export const createTask = async (req: Request, res: Response) => {
       userId: Number(req.userId),
     },
   });
+  const taskboardId = (
+    await prisma.taskcard.findUnique({
+      where: {
+        id: newTask.taskcardId,
+      },
+    })
+  )?.taskboardId;
+
+  const taskboard = await prisma.taskboard.findUnique({
+    where: {
+      id: taskboardId,
+    },
+  });
+
+  await sendEmailNotification(
+    taskboard?.sharedUsers as number[],
+    `A new task ${newTask.title} is added to the taskboard ${taskboard?.boardTitle} by the owner.`
+  );
   res.status(StatusCodes.CREATED).json(newTask);
 };
 
@@ -46,19 +66,7 @@ export const updateTask = async (req: Request, res: Response) => {
     eventEndDate,
   } = req.body;
 
-  if (deadlineDate) {
-    await createGoogleTask(req, taskTitle, description);
-  }
-
-  if (eventStartDate && eventEndDate) {
-    !(await isClashing(req, eventStartDate, eventEndDate)) &&
-      (await createGoogleCalendarEvent(
-        req,
-        taskTitle,
-        eventStartDate,
-        eventEndDate
-      ));
-  }
+  let googleTaskId: string | null | undefined;
 
   const oldTask = await prisma.task.findUnique({
     where: {
@@ -66,18 +74,23 @@ export const updateTask = async (req: Request, res: Response) => {
     },
   });
 
-  const updatedTask = await prisma.task.update({
+  if (deadlineDate) {
+    googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
+  }
+
+  let updatedTask = await prisma.task.update({
     where: {
       id: Number(taskId),
     },
     data: {
       title: taskTitle,
       taskcardId: taskcardId,
-      description: description,
+      description: description === "" ? null : description,
       completed: completed,
       deadlineDate,
       eventStartDate,
       eventEndDate,
+      googleTaskId: googleTaskId,
     },
   });
 
@@ -96,9 +109,27 @@ export const updateTask = async (req: Request, res: Response) => {
   });
 
   if (!(JSON.stringify(oldTask) === JSON.stringify(updatedTask))) {
+    if (!(await isClashing(req, eventStartDate, eventEndDate, oldTask))) {
+      const eventId = await createAndUpdateGoogleCalendarEvent(
+        req,
+        updatedTask,
+        eventStartDate,
+        eventEndDate
+      );
+
+      updatedTask = await prisma.task.update({
+        where: {
+          id: Number(taskId),
+        },
+        data: {
+          calendarEventId: eventId,
+        },
+      });
+    }
+
     await sendEmailNotification(
-      taskboard?.boardTitle as string,
-      taskboard?.sharedUsers as number[]
+      taskboard?.sharedUsers as number[],
+      `The taskboard ${taskboard?.boardTitle}, has been made some changes by the owner.`
     );
   }
 
@@ -107,10 +138,35 @@ export const updateTask = async (req: Request, res: Response) => {
 
 export const deleteTask = async (req: Request, res: Response) => {
   const { taskId } = req.params;
+
   const deletedTask = await prisma.task.delete({
     where: {
       id: Number(taskId),
     },
   });
+
+  const taskboardId = (
+    await prisma.taskcard.findUnique({
+      where: {
+        id: deletedTask.taskcardId,
+      },
+    })
+  )?.taskboardId;
+
+  const taskboard = await prisma.taskboard.findUnique({
+    where: {
+      id: taskboardId,
+    },
+  });
+
+  if (deletedTask.calendarEventId) deleteGoogleCalendarEvent(req, deletedTask);
+
+  if (deletedTask.googleTaskId) deleteGoogleTask(req, deletedTask);
+
+  await sendEmailNotification(
+    taskboard?.sharedUsers as number[],
+    `The taskboard ${taskboard?.boardTitle} is deleted by the owner.`
+  );
+
   res.status(StatusCodes.OK).json(deletedTask);
 };
