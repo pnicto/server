@@ -50,10 +50,12 @@ export const createTask = async (req: Request, res: Response) => {
     },
   });
 
-  await sendEmailNotification(
-    taskboard?.sharedUsers as number[],
-    `A new task ${newTask.title} is added to the taskboard ${taskboard?.boardTitle} by the owner.`
-  );
+  if (taskboard?.sharedUsers) {
+    await sendEmailNotification(
+      taskboard?.sharedUsers as number[],
+      `A new task ${newTask.title} is added to the taskboard ${taskboard?.boardTitle} by the owner.`
+    );
+  }
   res.status(StatusCodes.CREATED).json(newTask);
 };
 
@@ -112,7 +114,11 @@ export const updateTask = async (req: Request, res: Response) => {
   });
 
   if (!(JSON.stringify(oldTask) === JSON.stringify(updatedTask))) {
-    if (!(await isClashing(req, eventStartDate, eventEndDate, oldTask))) {
+    if (
+      eventStartDate &&
+      eventEndDate &&
+      !(await isClashing(req, eventStartDate, eventEndDate, oldTask))
+    ) {
       const eventId = await createAndUpdateGoogleCalendarEvent(
         req,
         updatedTask,
@@ -166,10 +172,11 @@ export const deleteTask = async (req: Request, res: Response) => {
 
   if (deletedTask.googleTaskId) deleteGoogleTask(req, deletedTask);
 
-  await sendEmailNotification(
-    taskboard?.sharedUsers as number[],
-    `The taskboard ${taskboard?.boardTitle} is deleted by the owner.`
-  );
-
+  if (taskboard?.sharedUsers) {
+    await sendEmailNotification(
+      taskboard?.sharedUsers as number[],
+      `The taskboard ${taskboard?.boardTitle} is deleted by the owner.`
+    );
+  }
   res.status(StatusCodes.OK).json(deletedTask);
 };
