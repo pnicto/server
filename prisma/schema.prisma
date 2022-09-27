@@ -27,19 +27,21 @@ model Taskcard {
 }
 
 model Task {
-  id             Int      @id @default(autoincrement())
-  createdAt      DateTime @default(now())
-  title          String
-  description    String?
-  completed      Boolean? @default(false)
-  taskCard       Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
-  priority       Priority @default(NO_PRIORITY)
-  taskcardId     Int
-  User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         Int
-  deadlineDate   String?
-  eventStartDate String?
-  eventEndDate   String?
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  title           String
+  description     String?
+  completed       Boolean? @default(false)
+  taskCard        Taskcard @relation(fields: [taskcardId], references: [id], onDelete: Cascade)
+  priority        Priority @default(NO_PRIORITY)
+  taskcardId      Int
+  User            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  deadlineDate    String?
+  eventStartDate  String?
+  eventEndDate    String?
+  calendarEventId String?
+  googleTaskId    String?
 }
 
 model User {
