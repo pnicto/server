@@ -11,21 +11,21 @@ export const createAndUpdateGoogleCalendarEvent = async (
   eventStartDate: string,
   eventEndDate: string
 ) => {
+  // Init client with refresh token from db
   const user = await prisma.user.findUnique({
     where: {
       id: req.userId,
     },
   });
-
   oauth2Client.setCredentials({
     refresh_token: user?.refreshToken,
   });
-
   const service = google.calendar({
     version: "v3",
     auth: oauth2Client,
   });
 
+  // Create a new event if this is the first time else update the existing event
   if (!task.calendarEventId) {
     return (
       await service.events.insert({
@@ -46,6 +46,7 @@ export const createAndUpdateGoogleCalendarEvent = async (
   } else {
     return (
       await service.events.update({
+        calendarId: "primary",
         eventId: task.calendarEventId as string,
         requestBody: {
           summary: task.title,
@@ -89,8 +90,7 @@ export const deleteGoogleCalendarEvent = async (req: Request, task: Task) => {
 
 export const createAndUpdateGoogleTask = async (
   req: Request,
-  task: Task | null,
-  deadlineDate: string
+  task: Task | null
 ) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -107,6 +107,7 @@ export const createAndUpdateGoogleTask = async (
     auth: oauth2Client,
   });
 
+  // Since tasks can only be added to existing lists and unlike calendar there is nothing like "primary" id, I create a new list named "taskboard app" and add/update tasks here
   const taskLists = (await service.tasklists.list()).data.items;
   let myTasklist: tasks_v1.Schema$TaskList | undefined;
 
@@ -123,6 +124,8 @@ export const createAndUpdateGoogleTask = async (
       })
     ).data;
   }
+
+  // Create a new task if this is the first time else update the existing event
   if (!task?.googleTaskId) {
     return (
       await service.tasks.insert({
@@ -177,12 +180,14 @@ export const sendEmailNotification = async (
   sharedUsers: number[],
   message: string
 ) => {
+  // Init client
   const client = new SMTPClient({
     user: process.env.GMAIL,
     password: process.env.GOOGLE_APP_PASSWORD,
     host: "smtp.gmail.com",
     ssl: true,
   });
+
   for (const userId of sharedUsers) {
     const user = await prisma.user.findUnique({
       where: {
@@ -199,6 +204,7 @@ export const sendEmailNotification = async (
   }
 };
 
+// Function which checks if the event timings are clashing with some other event or not
 export const isClashing = async (
   req: Request,
   eventStartDate: string,
@@ -220,6 +226,7 @@ export const isClashing = async (
     auth: oauth2Client,
   });
 
+  // Get all events happening in the duration
   let eventsList = (
     await service.events.list({
       calendarId: "primary",
@@ -228,6 +235,9 @@ export const isClashing = async (
       timeMax: eventEndDate,
     })
   ).data.items;
+
+  // Remove the current event if it is in the list
+  // This is for updating the same task in almost same duration
   eventsList = eventsList?.filter((event) => {
     event.id !== task?.calendarEventId;
   });
