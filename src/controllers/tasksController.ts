@@ -36,6 +36,7 @@ export const createTask = async (req: Request, res: Response) => {
       userId: Number(req.userId),
     },
   });
+
   const taskboardId = (
     await prisma.taskcard.findUnique({
       where: {
@@ -80,7 +81,7 @@ export const updateTask = async (req: Request, res: Response) => {
   });
 
   if (deadlineDate) {
-    googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
+    googleTaskId = await createAndUpdateGoogleTask(req, oldTask);
   }
 
   let updatedTask = await prisma.task.update({
