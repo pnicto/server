@@ -16,6 +16,9 @@ export const getAllTasks = async (req: Request, res: Response) => {
     where: {
       taskcardId: Number(taskcardId),
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   });
   res.status(StatusCodes.OK).json(allTasks);
 };

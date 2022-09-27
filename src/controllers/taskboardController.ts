@@ -9,6 +9,9 @@ export const getAllTaskboards = async (req: Request, res: Response) => {
     where: {
       userId: req.userId,
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   });
 
   const sharedTaskboards = await prisma.taskboard.findMany({

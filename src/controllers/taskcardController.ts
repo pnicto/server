@@ -12,6 +12,9 @@ export const getAllCards = async (req: Request, res: Response) => {
       taskboardId: Number(taskboardId),
       userId: sharedOwnerId !== undefined ? Number(sharedOwnerId) : req.userId,
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   });
   res.status(StatusCodes.OK).json(allCards);
 };
