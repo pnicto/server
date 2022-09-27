@@ -160,10 +160,6 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  res.cookie("accessToken", "", {
-    httpOnly: true,
-    secure: true,
-  });
-
+  res.clearCookie("accessToken");
   res.status(StatusCodes.OK).send();
 };
