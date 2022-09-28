@@ -20,6 +20,13 @@ export const getAllTaskboards = async (req: Request, res: Response) => {
         has: req.userId,
       },
     },
+    include: {
+      User: {
+        select: {
+          username: true,
+        },
+      },
+    },
   });
 
   res.status(StatusCodes.OK).json({
@@ -72,6 +79,7 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       });
       sharedIds.push(sharedUser?.id as number);
     }
+
     const updatedTaskboard = await prisma.taskboard.update({
       where: {
         id: Number(taskboardId),
@@ -82,6 +90,8 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       },
     });
 
+    console.log(updatedTaskboard);
+    
     const originalOwner = await prisma.user.findUnique({
       where: {
         id: originalOwnerId,
