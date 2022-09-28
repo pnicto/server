@@ -30,12 +30,14 @@ import {
   taskboardRouter,
   taskcardRouter,
   tasksRouter,
+  usersRouter,
 } from "./routes";
 
 app.use("/github/auth", githubOauthRouter);
 app.use("/api/taskboards", taskboardRouter);
 app.use("/api/taskcards", taskcardRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/users", usersRouter);
 app.use("/user", authRouter);
 app.get("*", async (req: Request, res: Response) => {
   res.sendFile(path.resolve(__dirname, "..", "public", "index.html"));
