@@ -13,7 +13,7 @@ import cookieParser from "cookie-parser";
 app.use(
   cors({
     credentials: true,
-    origin: "https://yet-another-todo-frontend-4prl.vercel.app",
+    origin: "https://react-crux.herokuapp.com",
   })
 );
 
