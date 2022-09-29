@@ -76,5 +76,5 @@ export const getUserDetails = async (req: Request, res: Response) => {
     });
   }
 
-  res.redirect("http://localhost:3000/app");
+  res.redirect("https://yet-another-todo-frontend-4prl.vercel.app/app");
 };
