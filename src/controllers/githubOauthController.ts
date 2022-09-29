@@ -66,6 +66,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
+      sameSite: "none",
     });
   } else {
     const accessToken = generateJWT({ userId: user.id });
@@ -73,6 +74,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
+      sameSite: "none",
     });
   }
 

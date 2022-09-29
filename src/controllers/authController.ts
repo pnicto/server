@@ -98,6 +98,7 @@ export const login = async (req: Request, res: Response) => {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
       });
 
       return res.status(StatusCodes.OK).json({
@@ -154,7 +155,7 @@ export const login = async (req: Request, res: Response) => {
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: true,sameSite: "none",
       });
 
       return res.status(StatusCodes.OK).json({
