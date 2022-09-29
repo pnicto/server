@@ -13,7 +13,7 @@ import cookieParser from "cookie-parser";
 app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 
 app.use(express.json());
-app.use(morgan("dev"));
+// app.use(morgan("dev"));
 app.use(cookieParser());
 
 // custom middleware
