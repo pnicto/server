@@ -123,7 +123,7 @@ export const login = async (req: Request, res: Response) => {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: true,
-        domain: "https://crux-induction.herokuapp.com/",
+        sameSite: "none",
       });
 
       return res.status(StatusCodes.OK).json({
