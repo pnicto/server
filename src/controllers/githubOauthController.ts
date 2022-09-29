@@ -76,5 +76,5 @@ export const getUserDetails = async (req: Request, res: Response) => {
     });
   }
 
-  res.redirect("https://yet-another-todo-frontend-4prl.vercel.app/app");
+  res.redirect("https://react-crux.herokuapp.com/app");
 };
