@@ -3,6 +3,6 @@ import { getUserDetails } from "../controllers/githubOauthController";
 
 const router = Router();
 
-router.route("/").get(getUserDetails);
+router.route("/").post(getUserDetails);
 
 export default router;
