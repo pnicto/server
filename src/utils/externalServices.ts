@@ -178,7 +178,8 @@ export const deleteGoogleTask = async (req: Request, task: Task | null) => {
 
 export const sendEmailNotification = async (
   sharedUsers: number[],
-  message: string
+  message: string,
+  oldSharedUsers?: number[]
 ) => {
   // Init client
   const client = new SMTPClient({
@@ -187,6 +188,12 @@ export const sendEmailNotification = async (
     host: "smtp.gmail.com",
     ssl: true,
   });
+
+  if (oldSharedUsers?.length !== 0) {
+    sharedUsers = sharedUsers.filter(
+      (sharedId) => !oldSharedUsers?.includes(sharedId)
+    );
+  }
 
   for (const userId of sharedUsers) {
     const user = await prisma.user.findUnique({

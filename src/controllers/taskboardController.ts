@@ -70,7 +70,7 @@ export const updateTaskboard = async (req: Request, res: Response) => {
     throw new BadRequestError("Action not allowed");
   }
 
-  if (emails) {
+  if (emails.length !== 0) {
     for (const email of emails) {
       const sharedUser = await prisma.user.findFirst({
         where: {
@@ -90,8 +90,6 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       },
     });
 
-    console.log(updatedTaskboard);
-    
     const originalOwner = await prisma.user.findUnique({
       where: {
         id: originalOwnerId,
@@ -100,7 +98,8 @@ export const updateTaskboard = async (req: Request, res: Response) => {
 
     await sendEmailNotification(
       updatedTaskboard?.sharedUsers as number[],
-      `${updatedTaskboard?.boardTitle} is shared with you by ${originalOwner?.email}.`
+      `${updatedTaskboard?.boardTitle} is shared with you by ${originalOwner?.email}.`,
+      taskboardToBeUpdated?.sharedUsers
     );
     return res.status(StatusCodes.OK).json(updatedTaskboard);
   } else {
@@ -108,12 +107,14 @@ export const updateTaskboard = async (req: Request, res: Response) => {
       taskboardToBeUpdated?.sharedUsers as number[],
       `Your access to ${taskboardToBeUpdated?.boardTitle} is revoked by the owner.`
     );
+
     const updatedTaskboard = await prisma.taskboard.update({
       where: {
         id: Number(taskboardId),
       },
       data: {
         boardTitle: taskboardTitle,
+        sharedUsers: [],
       },
     });
     return res.status(StatusCodes.OK).json(updatedTaskboard);
