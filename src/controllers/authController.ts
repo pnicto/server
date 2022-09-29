@@ -67,13 +67,18 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password, code } = req.body as authRequestBody;
 
+  console.log(code);
+
   if (code) {
     const { tokens } = await oauth2Client.getToken(code);
+    console.log(tokens);
     const decodedPayload = (
       await oauth2Client.verifyIdToken({
         idToken: tokens.id_token as string,
       })
     ).getPayload();
+
+    console.log(decodedPayload);
 
     const user = await prisma.user.findUnique({
       where: {

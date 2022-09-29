@@ -10,7 +10,12 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(
+  cors({
+    credentials: true,
+    origin: "https://yet-another-todo-frontend-4prl.vercel.app",
+  })
+);
 
 app.use(express.json());
 // app.use(morgan("dev"));
