@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import prisma from "../clients/prismaClient";
 import { generateJWT } from "../utils/generateJWT";
 
@@ -27,7 +28,8 @@ const getGithubUser = async (accessToken: string) => {
 };
 
 export const getUserDetails = async (req: Request, res: Response) => {
-  const { code } = req.query;
+  const { code } = req.body;
+  
   const postRes = await axios.post(
     "https://github.com/login/oauth/access_token",
     {
@@ -42,6 +44,10 @@ export const getUserDetails = async (req: Request, res: Response) => {
     }
   );
 
+  if (postRes.status !== 200) {
+    throw new Error("Something went wrong github");
+  }
+
   const access_token = postRes.data["access_token"];
   const { login, email } = await getGithubUser(access_token);
 
@@ -52,29 +58,36 @@ export const getUserDetails = async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    console.log("here");
-
     const newUser = await prisma.user.create({
       data: {
         email: email as string,
         username: login,
       },
     });
-    console.log(newUser);
+
     const accessToken = generateJWT({ userId: newUser.id });
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
     });
+
+    res.status(StatusCodes.OK).json({
+      email: newUser.email,
+      id: newUser.id,
+      username: newUser.username,
+    });
   } else {
     const accessToken = generateJWT({ userId: user.id });
-    console.log(user);
+
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
     });
+    res.status(StatusCodes.OK).json({
+      email: user.email,
+      username: user.username,
+      id: user.id,
+    });
   }
-
-  res.redirect("http://localhost:3000/app");
 };
