@@ -66,6 +66,8 @@ export const getUserDetails = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
+      sameSite: "none",
+      domain: "https://react-crux.herokuapp.com",
     });
   } else {
     const accessToken = generateJWT({ userId: user.id });
@@ -73,6 +75,8 @@ export const getUserDetails = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
+      sameSite: "none",
+      domain: "https://react-crux.herokuapp.com",
     });
   }
 

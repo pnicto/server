@@ -98,6 +98,8 @@ export const login = async (req: Request, res: Response) => {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
+        domain: "https://react-crux.herokuapp.com",
       });
 
       return res.status(StatusCodes.OK).json({
@@ -124,6 +126,7 @@ export const login = async (req: Request, res: Response) => {
         httpOnly: true,
         secure: true,
         sameSite: "none",
+        domain: "https://react-crux.herokuapp.com",
       });
 
       return res.status(StatusCodes.OK).json({
@@ -155,6 +158,8 @@ export const login = async (req: Request, res: Response) => {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: true,
+        sameSite: "none",
+        domain: "https://react-crux.herokuapp.com",
       });
 
       return res.status(StatusCodes.OK).json({
