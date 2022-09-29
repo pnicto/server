@@ -8,6 +8,8 @@ export const authenticateToken = async (
   next: NextFunction
 ) => {
   const { accessToken } = req.cookies;
+  console.log(accessToken, "accessToken");
+
   if (!accessToken) {
     throw new BadRequestError("Token missing");
   }
