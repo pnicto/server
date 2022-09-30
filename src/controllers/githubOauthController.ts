@@ -29,7 +29,7 @@ const getGithubUser = async (accessToken: string) => {
 
 export const getUserDetails = async (req: Request, res: Response) => {
   const { code } = req.body;
-  
+
   const postRes = await axios.post(
     "https://github.com/login/oauth/access_token",
     {
@@ -74,8 +74,9 @@ export const getUserDetails = async (req: Request, res: Response) => {
 
     res.status(StatusCodes.OK).json({
       email: newUser.email,
-      id: newUser.id,
       username: newUser.username,
+      id: newUser.id,
+      accessToken,
     });
   } else {
     const accessToken = generateJWT({ userId: user.id });
@@ -88,6 +89,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
       email: user.email,
       username: user.username,
       id: user.id,
+      accessToken,
     });
   }
 };
