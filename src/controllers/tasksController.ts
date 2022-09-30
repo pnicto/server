@@ -81,7 +81,7 @@ export const updateTask = async (req: Request, res: Response) => {
   });
 
   if (deadlineDate) {
-    googleTaskId = await createAndUpdateGoogleTask(req, oldTask);
+    googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
   }
 
   let updatedTask = await prisma.task.update({

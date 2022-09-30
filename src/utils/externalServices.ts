@@ -4,6 +4,7 @@ import { oauth2Client } from "../clients/googleOauth2Client";
 import { google, tasks_v1 } from "googleapis";
 import { SMTPClient } from "emailjs";
 import { Task } from "@prisma/client";
+import dayjs from "dayjs";
 
 export const createAndUpdateGoogleCalendarEvent = async (
   req: Request,
@@ -90,7 +91,8 @@ export const deleteGoogleCalendarEvent = async (req: Request, task: Task) => {
 
 export const createAndUpdateGoogleTask = async (
   req: Request,
-  task: Task | null
+  task: Task | null,
+  deadlineDate: string
 ) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -132,7 +134,7 @@ export const createAndUpdateGoogleTask = async (
         tasklist: myTasklist?.id as string | undefined,
         requestBody: {
           title: task?.title,
-          due: task?.deadlineDate,
+          due: dayjs(deadlineDate).add(1, "day").format("YYYY-MM-DDTHH:mm:ssZ"),
         },
       })
     ).data.id;
@@ -142,7 +144,7 @@ export const createAndUpdateGoogleTask = async (
         tasklist: myTasklist?.id as string,
         requestBody: {
           title: task.title,
-          due: task.deadlineDate,
+          due: dayjs(deadlineDate).add(1, "day").format("YYYY-MM-DDTHH:mm:ssZ"),
         },
       })
     ).data.id;
@@ -170,10 +172,12 @@ export const deleteGoogleTask = async (req: Request, task: Task | null) => {
     (taskList) => taskList.title === "taskboard app"
   );
 
-  await service.tasks.delete({
-    tasklist: myTasklist?.id as string,
-    task: task?.googleTaskId as string,
-  });
+  console.log(
+    await service.tasks.delete({
+      tasklist: myTasklist?.id as string,
+      task: task?.googleTaskId as string,
+    })
+  );
 };
 
 export const sendEmailNotification = async (
