@@ -228,6 +228,10 @@ export const isClashing = async (
     },
   });
 
+  if (!user?.refreshToken) {
+    return false;
+  }
+
   oauth2Client.setCredentials({
     refresh_token: user?.refreshToken,
   });
@@ -250,7 +254,7 @@ export const isClashing = async (
   // Remove the current event if it is in the list
   // This is for updating the same task in almost same duration
   eventsList = eventsList?.filter((event) => {
-    event.id !== task?.calendarEventId;
+    return event.id !== task?.calendarEventId;
   });
 
   if (eventsList?.length === 0) {
