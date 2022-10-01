@@ -9,6 +9,7 @@ import {
   deleteGoogleCalendarEvent,
   deleteGoogleTask,
 } from "../utils/externalServices";
+import { BadRequestError } from "../errors/badRequestError";
 
 export const getAllTasks = async (req: Request, res: Response) => {
   const { taskcardId } = req.params;
@@ -83,6 +84,11 @@ export const updateTask = async (req: Request, res: Response) => {
   if (deadlineDate) {
     googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
   }
+  const hasClash = await isClashing(req, eventStartDate, eventEndDate, oldTask);
+
+  if (eventStartDate && eventEndDate && hasClash) {
+    throw new BadRequestError("It is clashing");
+  }
 
   let updatedTask = await prisma.task.update({
     where: {
@@ -115,11 +121,7 @@ export const updateTask = async (req: Request, res: Response) => {
   });
 
   if (!(JSON.stringify(oldTask) === JSON.stringify(updatedTask))) {
-    if (
-      eventStartDate &&
-      eventEndDate &&
-      !(await isClashing(req, eventStartDate, eventEndDate, oldTask))
-    ) {
+    if (eventStartDate && eventEndDate && !hasClash) {
       const eventId = await createAndUpdateGoogleCalendarEvent(
         req,
         updatedTask,
