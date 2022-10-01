@@ -73,6 +73,18 @@ export const updateTask = async (req: Request, res: Response) => {
     eventEndDate,
   } = req.body;
 
+  if (completed) {
+    const updatedTask = await prisma.task.update({
+      where: {
+        id: Number(taskId),
+      },
+      data: {
+        completed: completed,
+      },
+    });
+    return res.status(StatusCodes.OK).json(updatedTask);
+  }
+
   let googleTaskId: string | null | undefined;
 
   const oldTask = await prisma.task.findUnique({
@@ -84,6 +96,7 @@ export const updateTask = async (req: Request, res: Response) => {
   if (deadlineDate) {
     googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
   }
+
   const hasClash = await isClashing(req, eventStartDate, eventEndDate, oldTask);
 
   if (eventStartDate && eventEndDate && hasClash) {
