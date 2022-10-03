@@ -93,11 +93,13 @@ export const updateTask = async (req: Request, res: Response) => {
     },
   });
 
+  let hasClash: boolean;
+  hasClash = await isClashing(req, eventStartDate, eventEndDate, oldTask);
+
   if (deadlineDate) {
     googleTaskId = await createAndUpdateGoogleTask(req, oldTask, deadlineDate);
+    hasClash = false;
   }
-
-  const hasClash = await isClashing(req, eventStartDate, eventEndDate, oldTask);
 
   if (eventStartDate && eventEndDate && hasClash) {
     throw new BadRequestError("It is clashing");
@@ -157,7 +159,6 @@ export const updateTask = async (req: Request, res: Response) => {
       `The taskboard ${taskboard?.boardTitle}, has been made some changes by the owner.`
     );
   }
-
   res.status(StatusCodes.OK).json(updatedTask);
 };
 
